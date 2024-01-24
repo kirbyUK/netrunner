@@ -1,0 +1,1 @@
+_API_ENDPOINT = "https://netrunnerdb.com/api/2.0/public"
