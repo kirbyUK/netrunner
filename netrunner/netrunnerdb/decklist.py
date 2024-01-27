@@ -3,6 +3,7 @@ from typing import Any, Dict, Optional
 import requests
 
 from netrunner.netrunnerdb.api import _API_ENDPOINT
+from netrunner.netrunnerdb.card import Card
 
 
 class Decklist:
@@ -28,9 +29,13 @@ class Decklist:
             "data" not in json):
             raise Exception
         self.decklist = json["data"][0]
+        self.cards_dict = { Card(id): quantity for id, quantity in self.decklist["cards"].items() }
 
     def __eq__(self, other: Any) -> bool:
         return type(other) is Decklist and self.id == other.id
+
+    def __hash__(self) -> int:
+        return self.id
 
     @property
     def id(self) -> int:
@@ -69,8 +74,8 @@ class Decklist:
         return self.decklist["tournament_badge"]
     
     @property
-    def cards(self) -> Dict[str, int]:
-        return self.decklist["cards"]
+    def cards(self) -> Dict[Card, int]:
+        return self.cards_dict
     
     @property
     def mwl_code(self) -> str:
