@@ -1,3 +1,4 @@
+import re
 from typing import Any, Dict, Optional
 
 import requests
@@ -9,7 +10,7 @@ from netrunner.netrunnerdb.card import Card
 class Decklist:
     """Class representing a single Netrunner decklist."""
 
-    def __init__(self, id: Optional[int] = None, uuid: Optional[str] = None) -> None:
+    def __init__(self, id: Optional[int] = None, uuid: Optional[str] = None, url: Optional[str] = None) -> None:
         """
         Constructor.
 
@@ -20,6 +21,10 @@ class Decklist:
             r = requests.get(f"{_API_ENDPOINT}/decklist/{id}")
         elif uuid is not None:
             r = requests.get(f"{_API_ENDPOINT}/decklist/{uuid}")
+        elif url is not None:
+            m = re.search("decklist/([0-9]+)", url)
+            id = int(m.group(1))
+            r = requests.get(f"{_API_ENDPOINT}/decklist/{id}")
         else:
             raise Exception
         

@@ -1,0 +1,1 @@
+_API_ENDPOINT = "https://alwaysberunning.net/api"
