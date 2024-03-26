@@ -28,6 +28,7 @@ class AlwaysBeRunning:
     """Wrapper around alwaysberunning.net."""
 
     def results(self,
+                offset: Optional[int] = None,
                 start: Optional[date] = None,
                 end: Optional[date] = None,
                 tournament_type: Optional[TournamentType] = None,
@@ -43,9 +44,11 @@ class AlwaysBeRunning:
                 approved: Optional[bool] = None,
                 desc: Optional[bool] = None) -> List[Event]:
         
-        params = { "limit": 100 }
+        params = { "limit": 500 }
 
         # Construct filter arguments
+        if offset is not None:
+            params["offset"] = offset
         if start is not None:
             params["start"] = start.isoformat()
         if end is not None:

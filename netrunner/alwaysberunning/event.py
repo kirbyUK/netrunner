@@ -36,7 +36,7 @@ class Event:
     
     @property
     def contact(self) -> Optional[str]:
-        return self.event.get("contact") 
+        return self.event.get("contact") or None
     
     @property
     def approved(self) -> Optional[int]:
@@ -52,17 +52,41 @@ class Event:
     
     @property
     def url(self) -> Optional[str]:
-        return self.event.get("url")
+        return self.event.get("url") or None
     
     @property
     def link_facebook(self) -> Optional[str]:
-        return self.event.get("link_facebook")
+        return self.event.get("link_facebook") or None
     
     # Event creator related properties
 
     # Location related properties
 
     # Tournament related properties
+
+    @property
+    def cardpool(self) -> Optional[str]:
+        return self.event.get("cardpool") or None
+    
+    @property
+    def date(self) -> Optional[str]:
+        return self.event.get("date") or None
+    
+    @property
+    def type(self) -> Optional[str]:
+        return self.event.get("type") or None
+
+    @property
+    def format(self) -> Optional[str]:
+        return self.event.get("format") or None
+    
+    @property
+    def concluded(self) -> Optional[bool]:
+        return self.event.get("concluded")
+    
+    @property
+    def charity(self) -> Optional[bool]:
+        return self.event.get("charity")
 
     # Concluded tournament properties
 
