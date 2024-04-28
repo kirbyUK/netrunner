@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Optional
 
+import datetime
 import requests
 
 from netrunner.alwaysberunning.api import _API_ENDPOINT
@@ -10,6 +11,7 @@ class Event:
 
     def __init__(self, event: Dict[str, Any]) -> None:
         self.event = event
+        self._entries: Optional[List[Entry]] = None
 
     def __eq__(self, other: Any) -> bool:
         return type(other) is Event and self.id == other.id
@@ -21,8 +23,10 @@ class Event:
         return f"Event({self.title})"
     
     def entries(self) -> List[Entry]:
-        r = requests.get(f"{_API_ENDPOINT}/entries", params={"id": self.id})
-        return [Entry(e) for e in r.json()]
+        if self._entries is None:
+            r = requests.get(f"{_API_ENDPOINT}/entries", params={"id": self.id})
+            self._entries = [Entry(self.id, e) for e in r.json()]
+        return self._entries
 
     # General properties
 
@@ -69,8 +73,11 @@ class Event:
         return self.event.get("cardpool") or None
     
     @property
-    def date(self) -> Optional[str]:
-        return self.event.get("date") or None
+    def date(self) -> Optional[datetime.date]:
+        date = self.event.get("date")
+        if date is not None:
+            return datetime.datetime.strptime(date, "%Y.%m.%d.").date()
+        return None
     
     @property
     def type(self) -> Optional[str]:

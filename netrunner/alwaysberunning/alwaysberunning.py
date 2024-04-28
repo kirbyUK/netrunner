@@ -1,13 +1,13 @@
-from enum import Enum
+from enum import IntEnum
 from datetime import date
-from typing import List, Optional
+from typing import Dict, List, Optional, Union
 
 import requests
 
 from netrunner.alwaysberunning.api import _API_ENDPOINT
 from netrunner.alwaysberunning.event import Event
 
-class TournamentType(Enum):
+class TournamentType(IntEnum):
     GNK = 1
     StoreChampionship = 2
     RegionalChampionship = 3
@@ -43,16 +43,24 @@ class AlwaysBeRunning:
                 concluded: Optional[bool] = None,
                 approved: Optional[bool] = None,
                 desc: Optional[bool] = None) -> List[Event]:
-        
-        params = { "limit": 500 }
+        """
+        Get results for concluded tournaments.
+
+        Queries are hard capped to a maximum of 500 results, per the API
+        documentation. Use the `offset` parameter to get more results.
+
+        For full documentation on the parameters, see the API documentation:
+        <https://alwaysberunning.net/apidoc#filters>.
+        """
+        params: Dict[str, Union[str, int]] = { "limit": 500 }
 
         # Construct filter arguments
         if offset is not None:
             params["offset"] = offset
         if start is not None:
-            params["start"] = start.isoformat()
+            params["start"] = f"{start.year}.{start.month}.{start.day}."
         if end is not None:
-            params["end"] = end.isoformat()
+            params["end"] = f"{end.year}.{end.month}.{end.day}."
         if tournament_type is not None:
             params["type"] = int(tournament_type)
         if cardpool is not None:

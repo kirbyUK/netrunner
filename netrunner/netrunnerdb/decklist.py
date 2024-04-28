@@ -23,8 +23,11 @@ class Decklist:
             r = requests.get(f"{_API_ENDPOINT}/decklist/{uuid}")
         elif url is not None:
             m = re.search("decklist/([0-9]+)", url)
-            id = int(m.group(1))
-            r = requests.get(f"{_API_ENDPOINT}/decklist/{id}")
+            if m is not None:
+                id = int(m.group(1))
+                r = requests.get(f"{_API_ENDPOINT}/decklist/{id}")
+            else:
+                raise Exception
         else:
             raise Exception
         

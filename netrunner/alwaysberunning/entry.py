@@ -3,20 +3,22 @@ from typing import Any, Dict, Optional
 class Entry:
     """A single entrant in an AlwaysBeRunning.net event."""
 
-    def __init__(self, entry: Dict[str, Any]) -> None:
+    def __init__(self, tournament_id: int, entry: Dict[str, Any]) -> None:
+        self.tournament = tournament_id
         self.entry = entry
 
     def __eq__(self, other: Any) -> bool:
         return (type(other) is Entry and
-                (self.user_id is not None and
+                ((self.user_id is not None and
                  other.user_id is not None and
                  self.user_id == other.user_id) or
                 (self.user_id is None and
                  other.user_id is None and
-                 self.user_import_name == other.user_import_name))
+                 self.user_import_name == other.user_import_name)) and
+                self.tournament == other.tournament)
 
     def __hash__(self) -> int:
-        return hash(self.id)
+        return hash((self.tournament, self.user_id))
 
     def __repr__(self) -> str:
         return f"Entry({self.user_name if self.user_name is not None else self.user_import_name})"
