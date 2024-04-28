@@ -1,16 +1,14 @@
 import argparse
 from datetime import date
 import functools
-from io import TextIOWrapper
 from math import floor
 from multiprocessing import Pool
 from netrunner.netrunnerdb.card import Card
 from netrunner.netrunnerdb.decklist import Decklist
 from netrunner.alwaysberunning.alwaysberunning import AlwaysBeRunning
 from netrunner.alwaysberunning.event import Event
-import os
 import sys
-from typing import List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 from sklearn.cluster import KMeans
 
@@ -39,16 +37,25 @@ def main():
     corp_decks = set([decklist[0] for decklist in decklists if decklist[0] is not None])
     runner_decks = set([decklist[1] for decklist in decklists if decklist[1] is not None])
     
-    # Cluster the corp decklists and print the markdown.
+    # Cluster the decklists.
+    clustered_corp_decks = cluster_decklists(corp_decks, corp_clusters)
+    clustered_runner_decks = cluster_decklists(runner_decks, runner_clusters)
+
+    # Write the markdown.
     with open(output_file, "w", encoding="utf-8") as f:
         f.write(f"## Corp\n")
-        cluster_decklists(corp_decks, corp_clusters, f)
-        f.write(os.linesep)
+        for label, decks in clustered_corp_decks.items():
+            f.write(f"\n### {label}\n\n")
+            for deck in decks:
+                f.write(f"* [{deck.name}](https://netrunnerdb.com/en/decklist/{deck.uuid})\n")
 
-        # Cluster the runner decklists and print the markdown.
+        f.write("\n")
+
         f.write(f"## Runner\n")
-        cluster_decklists(runner_decks, runner_clusters, f)
-        f.write(os.linesep)
+        for label, decks in clustered_runner_decks.items():
+            f.write(f"\n### {label}\n\n")
+            for deck in decks:
+                f.write(f"* [{deck.name}](https://netrunnerdb.com/en/decklist/{deck.uuid})\n")
 
 
 def args() -> Tuple[str, date, date, str, float, int, int]:
@@ -132,19 +139,19 @@ def all_events(abr: AlwaysBeRunning) -> Set[Event]:
     return all_events
 
 
-def cluster_decklists(decks: Set[Decklist], k: int, f: TextIOWrapper):
-    """Cluster the given decks and write the output markdown to the passed file."""
+def cluster_decklists(decks: Set[Decklist], k: int) -> Dict[int, List[Decklist]]:
+    """Cluster the given decks and return each keyed on its cluster number."""
     cards = all_cards(decks)
     vectored_decklists = [vectorise_decklist(cards, deck) for deck in decks]
 
     km = KMeans(n_clusters=k).fit(vectored_decklists)
     labels = list(km.labels_)
     decks_with_labels = list(zip(decks, labels))
-    for label in range(0, k):
-        f.write(f"\n### {label}\n\n")
-        for (deck, deck_label) in decks_with_labels:
-            if label == deck_label:
-                f.write(f"* [{deck.name}](https://netrunnerdb.com/en/decklist/{deck.uuid})\n")
+
+    return { label: [ deck for
+                      deck, deck_label in decks_with_labels
+                      if deck_label == label ]
+             for label in range(0, k) }
 
 
 def all_cards(all_decklists: Set[Decklist]) -> List[Card]:
