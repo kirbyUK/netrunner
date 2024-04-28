@@ -17,6 +17,8 @@ def main():
     output_file, start_date, end_date, tournament_format, top_percentage, corp_clusters, runner_clusters = args()
     abr = AlwaysBeRunning()
 
+    print(f"[+] Getting completed {tournament_format} events from {start_date.isoformat()} to {end_date.isoformat()}")
+
     # Get all events that match our filters.
     events = list(
         filter(
@@ -26,6 +28,8 @@ def main():
             all_events(abr)
         )
     )
+
+    print(f"[+] Getting decklists for {len(events)} tournaments")
 
     # Get all decklists from these events that match our filters, split out over
     # a multiprocessing pool to get it done quicker.
@@ -38,7 +42,10 @@ def main():
     runner_decks = set([decklist[1] for decklist in decklists if decklist[1] is not None])
     
     # Cluster the decklists.
+    print(f"[+] Clustering {len(corp_decks)} corp decks")
     clustered_corp_decks = cluster_decklists(corp_decks, corp_clusters)
+
+    print(f"[+] Clustering {len(runner_decks)} runner decks")
     clustered_runner_decks = cluster_decklists(runner_decks, runner_clusters)
 
     # Write the markdown.
@@ -49,6 +56,10 @@ def main():
             for deck in decks:
                 f.write(f"* [{deck.name}](https://netrunnerdb.com/en/decklist/{deck.uuid})\n")
 
+            f.write(f"\n#### Most Common Cards\n\n")
+            for card, quantity in most_common_cards(decks):
+                f.write(f"* [{card.title}](https://netrunnerdb.com/en/card/{card.code}) ({quantity} copies)\n")
+
         f.write("\n")
 
         f.write(f"## Runner\n")
@@ -56,6 +67,10 @@ def main():
             f.write(f"\n### {label}\n\n")
             for deck in decks:
                 f.write(f"* [{deck.name}](https://netrunnerdb.com/en/decklist/{deck.uuid})\n")
+
+            f.write(f"\n#### Most Common Cards\n\n")
+            for card, quantity in most_common_cards(decks):
+                f.write(f"* [{card.title}](https://netrunnerdb.com/en/card/{card.code}) ({quantity} copies)\n")
 
 
 def args() -> Tuple[str, date, date, str, float, int, int]:
@@ -93,11 +108,6 @@ def args() -> Tuple[str, date, date, str, float, int, int]:
 def decklists_from_event(top_percentage: float, tournament: Event) -> List[Tuple[Optional[Decklist], Optional[Decklist]]]:
     """Get all decklists from an event that fall in the top given percentage."""
     decks = []
-
-    try:
-        print(tournament.title)
-    except:
-        pass
 
     try:
         for entry in filter(
@@ -169,6 +179,23 @@ def vectorise_decklist(all_cards: List[Card], decklist: Decklist) -> List[int]:
         vector[all_cards.index(card)] = quantity
 
     return vector
+
+
+def most_common_cards(decks: List[Decklist], number_of_cards=10) -> List[Tuple[Card, int]]:
+    """Get the 20 most common cards from the given list of decks."""
+    card_counts: Dict[Card, int] = dict()
+
+    # Count cards across all decks.
+    for deck in decks:
+        for card, quantity in deck.cards.items():
+            if card not in card_counts:
+                card_counts[card] = quantity
+            else:
+                card_counts[card] += quantity
+
+    # Get the top cards.
+    n = number_of_cards if len(card_counts) > number_of_cards else len(card_counts) - 1
+    return sorted(card_counts.items(), key=lambda x: x[1], reverse=True)[:n]
 
 
 if __name__ == "__main__":
