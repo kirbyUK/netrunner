@@ -154,6 +154,12 @@ def cluster_decklists(decks: Set[Decklist]) -> Dict[int, List[Decklist]]:
     cards = all_cards(decks)
     vectored_decklists = [vectorise_decklist(cards, deck) for deck in decks]
 
+    # eps = Maximum distance between the samples to be in the same cluster.
+    #       Greater numbers means less correlated decks are grouped together,
+    #       smaller numbers starts to remove less related decks as noise.
+    #
+    # min_samples = Minimum number of items in a cluster. Clusters with too few
+    #               items are removed as noise.
     db = DBSCAN(eps=7.5, min_samples=3).fit(vectored_decklists)
     labels = list(db.labels_)
     decks_with_labels = list(zip(decks, labels))
