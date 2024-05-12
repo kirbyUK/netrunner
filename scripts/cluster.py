@@ -10,7 +10,7 @@ from netrunner.alwaysberunning.event import Event
 import sys
 from typing import Dict, List, Optional, Set, Tuple
 
-from sklearn.cluster import KMeans
+from sklearn.cluster import DBSCAN
 
 
 def main():
@@ -43,10 +43,10 @@ def main():
     
     # Cluster the decklists.
     print(f"[+] Clustering {len(corp_decks)} corp decks")
-    clustered_corp_decks = cluster_decklists(corp_decks, corp_clusters)
+    clustered_corp_decks = cluster_decklists(corp_decks)
 
     print(f"[+] Clustering {len(runner_decks)} runner decks")
-    clustered_runner_decks = cluster_decklists(runner_decks, runner_clusters)
+    clustered_runner_decks = cluster_decklists(runner_decks)
 
     # Write the markdown.
     with open(output_file, "w", encoding="utf-8") as f:
@@ -149,19 +149,20 @@ def all_events(abr: AlwaysBeRunning) -> Set[Event]:
     return all_events
 
 
-def cluster_decklists(decks: Set[Decklist], k: int) -> Dict[int, List[Decklist]]:
+def cluster_decklists(decks: Set[Decklist]) -> Dict[int, List[Decklist]]:
     """Cluster the given decks and return each keyed on its cluster number."""
     cards = all_cards(decks)
     vectored_decklists = [vectorise_decklist(cards, deck) for deck in decks]
 
-    km = KMeans(n_clusters=k).fit(vectored_decklists)
-    labels = list(km.labels_)
+    db = DBSCAN(eps=7.5, min_samples=3).fit(vectored_decklists)
+    labels = list(db.labels_)
     decks_with_labels = list(zip(decks, labels))
+    number_of_clusters = len(set(labels)) - (1 if -1 in labels else 0)
 
     return { label: [ deck for
                       deck, deck_label in decks_with_labels
                       if deck_label == label ]
-             for label in range(0, k) }
+             for label in range(0, number_of_clusters) }
 
 
 def all_cards(all_decklists: Set[Decklist]) -> List[Card]:
