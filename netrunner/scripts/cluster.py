@@ -14,7 +14,7 @@ from sklearn.cluster import DBSCAN
 
 
 def main():
-    output_file, start_date, end_date, tournament_format, top_percentage, corp_clusters, runner_clusters = args()
+    output_file, start_date, end_date, tournament_format, top_percentage, eps, min_clusters = args()
     abr = AlwaysBeRunning()
 
     print(f"[+] Getting completed {tournament_format} events from {start_date.isoformat()} to {end_date.isoformat()}")
@@ -73,7 +73,7 @@ def main():
                 f.write(f"* [{card.title}](https://netrunnerdb.com/en/card/{card.code}) ({quantity} copies)\n")
 
 
-def args() -> Tuple[str, date, date, str, float, int, int]:
+def args() -> Tuple[str, date, date, str, float, float, int]:
     """Parse commandline arguments."""
     parser = argparse.ArgumentParser(
         prog="cluster",
@@ -85,8 +85,8 @@ def args() -> Tuple[str, date, date, str, float, int, int]:
     parser.add_argument("--end-date", default=date.today().isoformat(), help="End date for completed events (inclusive)")
     parser.add_argument("--format", default="standard", choices=["standard", "startup"], help="The format to get completed decks for")
     parser.add_argument("--percentage", default=30, type=int, help="Percentage of decks to collect from tournaments (0-100)")
-    parser.add_argument("--corp-clusters", default=15, type=int, help="Number of clusters to use for corp decks")
-    parser.add_argument("--runner-clusters", default=10, type=int, help="Number of clusters to use for runner decks")
+    parser.add_argument("--eps", default=7.5, type=float, help="EPS value for DBSSCAN algorithm")
+    parser.add_argument("--min-samples", default=3, type=int, help="Minimum number of samples to form a cluster")
 
     args = parser.parse_args()
 
@@ -100,8 +100,8 @@ def args() -> Tuple[str, date, date, str, float, int, int]:
         date.fromisoformat(args.end_date),
         args.format,
         args.percentage / 100,
-        args.corp_clusters,
-        args.runner_clusters
+        args.eps,
+        args.min_samples
     )
 
 
@@ -149,7 +149,7 @@ def all_events(abr: AlwaysBeRunning) -> Set[Event]:
     return all_events
 
 
-def cluster_decklists(decks: Set[Decklist]) -> Dict[int, List[Decklist]]:
+def cluster_decklists(decks: Set[Decklist], eps: float, min_samples: int) -> Dict[int, List[Decklist]]:
     """Cluster the given decks and return each keyed on its cluster number."""
     cards = all_cards(decks)
     vectored_decklists = [vectorise_decklist(cards, deck) for deck in decks]
@@ -160,7 +160,7 @@ def cluster_decklists(decks: Set[Decklist]) -> Dict[int, List[Decklist]]:
     #
     # min_samples = Minimum number of items in a cluster. Clusters with too few
     #               items are removed as noise.
-    db = DBSCAN(eps=7.5, min_samples=3).fit(vectored_decklists)
+    db = DBSCAN(eps=eps, min_samples=min_samples).fit(vectored_decklists)
     labels = list(db.labels_)
     decks_with_labels = list(zip(decks, labels))
     number_of_clusters = len(set(labels)) - (1 if -1 in labels else 0)

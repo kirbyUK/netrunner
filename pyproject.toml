@@ -5,4 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "netrunner"
 version = "0.1a"
-dependencies = [ "requests" ]
+dependencies = [ "requests", "scikit-learn" ]
+
+[project.scripts]
+netrunner-cluster = "netrunner.scripts.cluster:main"
