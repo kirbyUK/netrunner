@@ -14,7 +14,7 @@ from sklearn.cluster import DBSCAN
 
 
 def main():
-    output_file, start_date, end_date, tournament_format, top_percentage, eps, min_clusters = args()
+    output_file, start_date, end_date, tournament_format, top_percentage, eps, min_samples = args()
     abr = AlwaysBeRunning()
 
     print(f"[+] Getting completed {tournament_format} events from {start_date.isoformat()} to {end_date.isoformat()}")
@@ -43,10 +43,10 @@ def main():
     
     # Cluster the decklists.
     print(f"[+] Clustering {len(corp_decks)} corp decks")
-    clustered_corp_decks = cluster_decklists(corp_decks)
+    clustered_corp_decks = cluster_decklists(corp_decks, eps, min_samples)
 
     print(f"[+] Clustering {len(runner_decks)} runner decks")
-    clustered_runner_decks = cluster_decklists(runner_decks)
+    clustered_runner_decks = cluster_decklists(runner_decks, eps, min_samples)
 
     # Write the markdown.
     with open(output_file, "w", encoding="utf-8") as f:
