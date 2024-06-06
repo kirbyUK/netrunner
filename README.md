@@ -2,7 +2,7 @@
 
 Python library and scripts for interacting with various Netrunner services.
 
-**If you've never run any Python before, please read the [beginner's guide](https://github.com/kirbyUK/netrunner/blob/master/BEGINNERS-GUIDE.md) to get started.
+**If you've never run any Python before, please read the [beginner's guide](https://github.com/kirbyUK/netrunner/blob/master/BEGINNERS-GUIDE.md) to get started.**
 
 ## Library
 

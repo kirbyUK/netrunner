@@ -30,6 +30,12 @@ The script outputs a [Markdown](https://en.wikipedia.org/wiki/Markdown) file wit
 
 Markdown is a common format and can be read with just a text editor like Notepad, or if you want formatting you could copy-and-paste the output to [StackEdit](https://stackedit.io), or anything else that can render Markdown.
 
+## The eps and min-samples parameters
+
+The `--eps` parameter is key to how the clusters are decided. The larger the number, the greater the distance allowed between two points to be considered in the same cluster. The default value of 7.5 was useful for the RWR meta from release to just before the banlist. When there's less data, e.g. just after a banlist comes out, you might need to increase it to get decks to stick together. If you have the value too high, you might have decks that seem unrelated start to group together. For example, Precision Design and Sportsmetal decks can start to be in the same cluster if the value is big enough. Whether this is correct or not is really up to you. The best thing to do is experiment with the parameter.
+
+The `--min-samples` parameter determines the minimum number of decks that need to form a cluster. If you set it to 1, every deck will have a cluster, meaning you might end up with many random off-meta decks that have not seen repeated success. Again, experiment and use a value that generates what you'd like.
+
 ## Notes
 
 This script is a very close analouge to what's presented in Luciano Strika's [K-Means Clustering for Magic: the Gathering Decks](https://strikingloo.github.io/k-means-clustering-magic-the-gathering). That blog mostly looks to determine if a card would be good in a given deck, whereas the purpose of this script as I see it is as a crude "what's the meta" button - something to be run that determines the common winning decks and what they're running.

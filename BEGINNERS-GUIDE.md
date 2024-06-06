@@ -40,7 +40,7 @@ If this completes successfully, you're ready to start running the code.
 
 For this we'll be using the [netrunner.cluster](https://github.com/kirbyUK/netrunner/tree/master/netrunner/cluster) script as our example.
 
-To run the script, use the name like so:
+To run the script, use the name of the script like so:
 
 ```
 python -m netrunner.cluster
