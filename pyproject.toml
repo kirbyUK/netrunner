@@ -8,4 +8,4 @@ version = "0.1a"
 dependencies = [ "requests", "scikit-learn" ]
 
 [project.scripts]
-netrunner-cluster = "netrunner.scripts.cluster:main"
+netrunner-cluster = "netrunner.cluster.__main__:main"
