@@ -43,7 +43,7 @@ class Decklist:
         return type(other) is Decklist and self.id == other.id
 
     def __hash__(self) -> int:
-        return self.id
+        return hash(self.id)
 
     @property
     def id(self) -> int:

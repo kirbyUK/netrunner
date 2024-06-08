@@ -1,16 +1,14 @@
 import argparse
 from datetime import date
 import functools
-from math import floor
 from multiprocessing import Pool
-from netrunner.netrunnerdb.card import Card
-from netrunner.netrunnerdb.decklist import Decklist
 from netrunner.alwaysberunning.alwaysberunning import AlwaysBeRunning
-from netrunner.alwaysberunning.event import Event
 import sys
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Tuple
 
-from sklearn.cluster import DBSCAN
+from netrunner.cluster.clustering import cluster_decklists
+from netrunner.cluster.data_collection import all_events, decklists_from_event
+from netrunner.cluster.most_common import most_common_cards
 
 
 def main():
@@ -103,106 +101,6 @@ def args() -> Tuple[str, date, date, str, float, float, int]:
         args.eps,
         args.min_samples
     )
-
-
-def decklists_from_event(top_percentage: float, tournament: Event) -> List[Tuple[Optional[Decklist], Optional[Decklist]]]:
-    """Get all decklists from an event that fall in the top given percentage."""
-    decks = []
-
-    try:
-        for entry in filter(
-            lambda entry: 1 <= (entry.rank_swiss or 0) <= floor(len(tournament.entries()) * top_percentage),
-            tournament.entries()
-        ):
-            corp = None
-            runner = None
-
-            if entry.corp_deck_url is not None:
-                try:
-                    corp = Decklist(url=entry.corp_deck_url)
-                except:
-                    sys.stderr.write(f"failed on {entry.corp_deck_url}\n")
-
-            if entry.runner_deck_url is not None:
-                try:
-                    runner = Decklist(url=entry.runner_deck_url)
-                except:
-                    sys.stderr.write(f"failed on {entry.runner_deck_url}\n")
-
-            decks.append((corp, runner))
-    except:
-        sys.stderr.write(f"failed on entries for {tournament.title}\n")
-
-    return decks
-
-
-def all_events(abr: AlwaysBeRunning) -> Set[Event]:
-    """Get all ABR events."""
-    all_events: Set[Event] = set()
-    offset = 0
-    events = abr.results(offset=offset)
-    while len(events) >= 500:
-        all_events = all_events.union(set(events))
-        events = abr.results(offset=offset)
-        offset += 500
-
-    return all_events
-
-
-def cluster_decklists(decks: Set[Decklist], eps: float, min_samples: int) -> Dict[int, List[Decklist]]:
-    """Cluster the given decks and return each keyed on its cluster number."""
-    cards = all_cards(decks)
-    vectored_decklists = [vectorise_decklist(cards, deck) for deck in decks]
-
-    # eps = Maximum distance between the samples to be in the same cluster.
-    #       Greater numbers means less correlated decks are grouped together,
-    #       smaller numbers starts to remove less related decks as noise.
-    #
-    # min_samples = Minimum number of items in a cluster. Clusters with too few
-    #               items are removed as noise.
-    db = DBSCAN(eps=eps, min_samples=min_samples).fit(vectored_decklists)
-    labels = list(db.labels_)
-    decks_with_labels = list(zip(decks, labels))
-    number_of_clusters = len(set(labels)) - (1 if -1 in labels else 0)
-
-    return { label: [ deck for
-                      deck, deck_label in decks_with_labels
-                      if deck_label == label ]
-             for label in range(0, number_of_clusters) }
-
-
-def all_cards(all_decklists: Set[Decklist]) -> List[Card]:
-    """Get all cards from all decklists."""
-    return sorted(list(set([card
-                            for decklist in all_decklists
-                            for card in decklist.cards])),
-                  key=lambda card: card.title)
-
-
-def vectorise_decklist(all_cards: List[Card], decklist: Decklist) -> List[int]:
-    """Convert a decklist to a vector."""
-    vector = [0] * len(all_cards)
-    for card, quantity in decklist.cards.items():  
-        vector[all_cards.index(card)] = quantity
-
-    return vector
-
-
-def most_common_cards(decks: List[Decklist], number_of_cards=10) -> List[Tuple[Card, int]]:
-    """Get the 20 most common cards from the given list of decks."""
-    card_counts: Dict[Card, int] = dict()
-
-    # Count cards across all decks.
-    for deck in decks:
-        for card, quantity in deck.cards.items():
-            if card not in card_counts:
-                card_counts[card] = quantity
-            else:
-                card_counts[card] += quantity
-
-    # Get the top cards.
-    n = number_of_cards if len(card_counts) > number_of_cards else len(card_counts) - 1
-    return sorted(card_counts.items(), key=lambda x: x[1], reverse=True)[:n]
 
 
 if __name__ == "__main__":

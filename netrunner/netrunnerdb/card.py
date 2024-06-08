@@ -15,7 +15,7 @@ class Card:
         :param id: The id of the card to fetch.
         """
         r = requests.get(f"{_API_ENDPOINT}/card/{id}")
-        
+
         json = r.json()
         if ("success" not in json or not json["success"] or
             "total" not in json or json["total"] < 1 or
